@@ -1,0 +1,28 @@
+# Bài 6: Kiểm tra và tối ưu hiệu năng Portal
+
+## Phần 1. Phân tích
+**Cách phân tích**
+1. Nhấn F12, mở tab Network.
+2. Tick Disable cache để trang tải lại từ đầu, đo đúng thời gian thật.
+3. Reload trang và quan sát biểu đồ Waterfall, xem từng file mất bao lâu.
+
+**Tìm nút thắt cổ chai (bottleneck)**
+- Trên Waterfall, file nào có thanh dài nhất là file làm chậm trang.
+- Nguyên nhân thường gặp ở portal này:
+  - Các file hình ảnh (đặc biệt ảnh bản đồ) dung lượng quá lớn.
+  - Các Request lỗi 404 vẫn chờ rồi mới báo lỗi, làm kéo dài thời gian tải.
+- Vì shipper dùng mạng yếu trên điện thoại nên file nặng tải càng chậm.
+
+## Phần 2. Triển khai (3 bước tối ưu)
+1. **Sửa lỗi đứt link (404):** Lọc Status 404 trong tab Network, sửa lại đường dẫn đúng hoặc xóa link thừa.
+2. **Nén tài nguyên hình ảnh:** Giảm dung lượng ảnh, đổi sang định dạng nhẹ như WebP, resize đúng kích thước hiển thị.
+3. **Bật Browser Cache cho tài nguyên tĩnh:** Cấu hình cho các file CSS, JS, ảnh được lưu lại trên máy, lần sau không cần tải lại.
+
+Lưu ý: Các file CSS và JS quan trọng phải trả về 200 OK trước khi Rendering Engine vẽ giao diện.
+
+## Phần 3. Kiểm thử
+Khi reload mà thấy mã 304 Not Modified thì đó là tín hiệu tốt vì:
+- Trình duyệt hỏi máy chủ "file này có thay đổi không?" và máy chủ trả lời "không".
+- Trình duyệt dùng luôn file đã lưu trong cache, không phải tải lại.
+- Kết quả là tiết kiệm băng thông, trang tải nhanh hơn, rất hợp với mạng yếu của shipper.
+- Điều đó chứng tỏ Browser Cache đã hoạt động đúng.
